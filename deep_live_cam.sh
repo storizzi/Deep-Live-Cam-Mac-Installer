@@ -1,8 +1,17 @@
 #!/bin/zsh
 
-# Define the environment name and the required Python version
+# Constants
 ENV_NAME="deep-live-cam"
 REQUIRED_PYTHON_VERSION="3.10"
+REPO_URL="https://github.com/hacksider/Deep-Live-Cam.git"
+MODELS_DIR="Deep-Live-Cam/models"
+URL_GFPGAN="https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.pth"
+URL_INSWAPPER="https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx"
+MODEL_1="$MODELS_DIR/GFPGANv1.4.pth"
+MODEL_2="$MODELS_DIR/inswapper_128_fp16.onnx"
+COREML_DEPENDENCY="onnxruntime-silicon==1.13.1"
+INTEL_DEPENDENCY="onnxruntime-coreml==1.13.1"
+BREW_CONDA_PATH="/opt/homebrew/Caskroom/miniconda/base/bin"
 
 # Function to display help message
 display_help() {
@@ -17,6 +26,17 @@ display_help() {
     echo "  --camreset [APP_ID]  Reset camera access for the specified application (e.g., com.apple.Terminal or com.googlecode.iterm2)."
     echo "  --help       Display this help message and exit."
     exit 0
+}
+
+# Function to ensure we are using Homebrew's Conda
+ensure_brew_conda() {
+    if [ -d "$BREW_CONDA_PATH" ]; then
+        export PATH="$BREW_CONDA_PATH:$PATH"
+        echo "Using Conda from Homebrew installation at $BREW_CONDA_PATH"
+    else
+        echo "Homebrew Conda not found at $BREW_CONDA_PATH. Please ensure Miniconda is installed via Homebrew."
+        exit 1
+    fi
 }
 
 # Function to check if Homebrew is installed, and install it if not
@@ -39,6 +59,8 @@ check_and_install_homebrew() {
 
 # Function to check if Conda is installed, and install Miniconda via Homebrew if not
 check_and_install_conda() {
+    ensure_brew_conda
+
     if ! command -v conda &> /dev/null; then
         echo "Conda is not installed. Installing Miniconda via Homebrew..."
         brew install --cask miniconda
@@ -52,6 +74,9 @@ check_and_install_conda() {
         source ~/.zshrc
     else
         echo "Conda is already installed."
+        # Ensure Conda is initialized
+        conda init zsh
+        source ~/.zshrc
     fi
 }
 
@@ -97,7 +122,7 @@ create_or_update_conda_env() {
 
 # Function to get the full path to Python and Pip in the Conda environment
 get_conda_bin_paths() {
-    CONDA_ENV_PATH=$(conda info --envs | grep "$ENV_NAME" | awk '{print $2}')
+    CONDA_ENV_PATH=$(conda info --envs | grep "$ENV_NAME" | awk '{print $NF}')
     PYTHON_PATH="$CONDA_ENV_PATH/bin/python"
     PIP_PATH="$CONDA_ENV_PATH/bin/pip"
 
@@ -114,7 +139,7 @@ get_conda_bin_paths() {
 clone_repo() {
     if [[ ! -d "Deep-Live-Cam" ]]; then
         echo "Cloning the Deep-Live-Cam repository..."
-        git clone https://github.com/hacksider/Deep-Live-Cam.git
+        git clone "$REPO_URL"
         if [[ $? -ne 0 ]]; then
             echo "Failed to clone the Deep-Live-Cam repository."
             exit 1
@@ -126,17 +151,8 @@ clone_repo() {
 
 # Function to check and download models
 check_and_download_models() {
-    local models_dir="Deep-Live-Cam/models"
-    
     # Ensure the models directory exists
-    mkdir -p "$models_dir"
-    
-    # URLs for models
-    URL_GFPGAN="https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.pth"
-    URL_INSWAPPER="https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx"
-
-    MODEL_1="$models_dir/GFPGANv1.4.pth"
-    MODEL_2="$models_dir/inswapper_128_fp16.onnx"
+    mkdir -p "$MODELS_DIR"
 
     # Download GFPGAN model if not already present
     if [[ ! -f $MODEL_1 ]]; then
@@ -168,7 +184,7 @@ install_coreml_dependencies() {
     echo "Installing CoreML dependencies for Apple Silicon..."
     $PIP_PATH install --upgrade pip
     $PIP_PATH uninstall -y onnxruntime-silicon || echo "WARNING: Skipping onnxruntime-silicon as it is not installed."
-    if ! $PIP_PATH install onnxruntime-silicon==1.13.1; then
+    if ! $PIP_PATH install $COREML_DEPENDENCY; then
         echo "ERROR: Could not find a compatible version of onnxruntime-silicon. Check your Python environment and ensure it supports this package."
         exit 1
     fi
@@ -179,7 +195,7 @@ install_coreml_dependencies_intel() {
     echo "Installing CoreML dependencies for Intel-based Mac..."
     $PIP_PATH install --upgrade pip
     $PIP_PATH uninstall -y onnxruntime-coreml || echo "WARNING: Skipping onnxruntime-coreml as it is not installed."
-    if ! $PIP_PATH install onnxruntime-coreml==1.13.1; then
+    if ! $PIP_PATH install $INTEL_DEPENDENCY; then
         echo "ERROR: Could not find a compatible version of onnxruntime-coreml. Check your Python environment and ensure it supports this package."
         exit 1
     fi
@@ -195,6 +211,9 @@ run_setup() {
 
     # Create or update the Conda environment with the correct Python version
     create_or_update_conda_env
+
+    # Get the paths to python and pip
+    get_conda_bin_paths
 
     # Clone the repository before proceeding with other steps
     clone_repo
