@@ -59,6 +59,8 @@ It also aims to avoid pitfalls of other types of environment approaches by pinpo
 - **`--camreset [APP_ID]`**: Reset camera access for the specified application (e.g., `com.apple.Terminal` or `com.googlecode.iterm2`).
 - **`--help`**: Display help message and exit.
 
+All other options will be passed directly to the Deep-Live-Cam Python library.
+
 ## Camera Access
 
 The application requires camera access. If the script detects that camera access is not granted, it will guide you through the process of enabling it.

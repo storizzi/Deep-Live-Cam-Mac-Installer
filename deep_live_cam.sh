@@ -13,9 +13,12 @@ COREML_DEPENDENCY="onnxruntime-silicon==1.13.1"
 INTEL_DEPENDENCY="onnxruntime-coreml==1.13.1"
 BREW_CONDA_PATH="/opt/homebrew/Caskroom/miniconda/base/bin"
 
+# Array to store parameters to pass to the Python application
+PYTHON_PARAMS=()
+
 # Function to display help message
 display_help() {
-    echo "Usage: ./deep_live_cam.sh [OPTIONS]"
+    echo "Usage: ./deep_live_cam.sh [OPTIONS] [PYTHON OPTIONS]"
     echo ""
     echo "Options:"
     echo "  --run        Skip setup and run the application only."
@@ -25,6 +28,26 @@ display_help() {
     echo "  --clean      Remove the Conda environment and delete the cloned repository."
     echo "  --camreset [APP_ID]  Reset camera access for the specified application (e.g., com.apple.Terminal or com.googlecode.iterm2)."
     echo "  --help       Display this help message and exit."
+    echo ""
+    echo "Python Options:"
+    echo "  Any additional options will be passed directly to the deep-live-cam Python application."
+    echo ""
+    echo "Python Application Options:"
+    echo "  -h, --help                             Show help message and exit."
+    echo "  -s SOURCE_PATH, --source SOURCE_PATH   Select source image."
+    echo "  -t TARGET_PATH, --target TARGET_PATH   Select target image or video."
+    echo "  -o OUTPUT_PATH, --output OUTPUT_PATH   Select output file or directory."
+    echo "  --frame-processor ...                  Frame processors."
+    echo "  --keep-fps                             Keep original FPS."
+    echo "  --keep-audio                           Keep original audio."
+    echo "  --keep-frames                          Keep temporary frames."
+    echo "  --many-faces                           Process every face."
+    echo "  --video-encoder ...                    Adjust output video encoder."
+    echo "  --video-quality ...                    Adjust output video quality."
+    echo "  --max-memory ...                       Maximum amount of RAM in GB."
+    echo "  --execution-provider ...               Available execution provider."
+    echo "  --execution-threads ...                Number of execution threads."
+    echo "  -v, --version                          Show program's version number and exit."
     exit 0
 }
 
@@ -281,10 +304,10 @@ run_application() {
 
     if [[ "$USE_CPU_ONLY" == true ]]; then
         echo "Running the application using CPU only..."
-        $PYTHON_PATH run.py
+        $PYTHON_PATH run.py "${PYTHON_PARAMS[@]}"
     else
         echo "Running the application with CoreML acceleration..."
-        $PYTHON_PATH run.py --execution-provider coreml
+        $PYTHON_PATH run.py --execution-provider coreml "${PYTHON_PARAMS[@]}"
     fi
 
     cd ..
@@ -365,7 +388,6 @@ detect_terminal_app_id() {
 }
 
 # Function to clean the environment and delete the repository
-# Function to clean the environment and delete the repository
 clean_environment() {
     echo "Cleaning up environment and repository..."
     
@@ -403,6 +425,8 @@ SKIP_CAMERA_CHECK=false
 USE_CPU_ONLY=false
 APP_ID=""
 CLEAN_ONLY=false
+SKIP_SETUP=false
+SKIP_RUN=false
 
 # Parse command-line arguments
 for arg in "$@"; do
@@ -435,6 +459,8 @@ for arg in "$@"; do
             display_help
             ;;
         *)
+            # Collect other parameters to pass them to the Python script
+            PYTHON_PARAMS+=("$arg")
             ;;
     esac
 done
