@@ -365,13 +365,24 @@ detect_terminal_app_id() {
 }
 
 # Function to clean the environment and delete the repository
+# Function to clean the environment and delete the repository
 clean_environment() {
     echo "Cleaning up environment and repository..."
     
+    # Ensure Conda is initialized in the current shell
+    conda init zsh
+    source ~/.zshrc
+    
+    # Deactivate the environment if it is active
+    if [[ "$CONDA_DEFAULT_ENV" == "$ENV_NAME" ]]; then
+        echo "Deactivating the Conda environment '$ENV_NAME'..."
+        conda deactivate || echo "Warning: Could not deactivate the environment. Continuing with cleanup."
+    fi
+
     # Remove Conda environment if it exists
     if conda info --envs | grep -q "$ENV_NAME"; then
         echo "Removing Conda environment '$ENV_NAME'..."
-        conda remove -n $ENV_NAME --all -y
+        conda remove -n $ENV_NAME --all -y || echo "Warning: Could not remove the environment. Please ensure it is deactivated and try again."
     else
         echo "Conda environment '$ENV_NAME' does not exist."
     fi
