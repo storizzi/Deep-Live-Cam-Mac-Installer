@@ -12,7 +12,8 @@ MODEL_1="$MODELS_DIR/GFPGANv1.4.pth"
 MODEL_2="$MODELS_DIR/inswapper_128_fp16.onnx"
 COREML_DEPENDENCY="onnxruntime-silicon==1.13.1"
 INTEL_DEPENDENCY="onnxruntime-coreml==1.13.1"
-BREW_CONDA_PATH="/opt/homebrew/Caskroom/miniconda/base/bin"
+BREW_CONDA_PATH1="/opt/homebrew/Caskroom/miniconda/base/bin"
+BREW_CONDA_PATH2="/usr/local/Caskroom/miniconda/base/bin"
 
 # Array to store parameters to pass to the Python application
 PYTHON_PARAMS=()
@@ -84,9 +85,12 @@ check_and_install_homebrew() {
 
 # Function to check if Conda is installed
 check_conda() {
-    if [ -d "$BREW_CONDA_PATH" ]; then
-        CONDA_BIN_PATH="$BREW_CONDA_PATH"
-        echo "Using Conda from Homebrew installation at $CONDA_BIN_PATH"
+    if [ -d "$BREW_CONDA_PATH1" ]; then
+        CONDA_BIN_PATH="$BREW_CONDA_PATH1"
+        echo "Using Conda from Apple Silicon Homebrew installation at $CONDA_BIN_PATH"
+    elif [ -d "$BREW_CONDA_PATH2" ]; then
+        CONDA_BIN_PATH="$BREW_CONDA_PATH2"
+        echo "Using Conda from Intel Silicon installation at $CONDA_BIN_PATH"
     elif command -v conda &> /dev/null; then
         CONDA_BIN_PATH=$(dirname "$(command -v conda)")
         echo "Using existing Conda installation at $CONDA_BIN_PATH"

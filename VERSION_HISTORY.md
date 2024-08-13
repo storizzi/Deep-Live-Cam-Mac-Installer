@@ -1,5 +1,6 @@
 # Version History
 
+* 0.0.7 - 13 Aug 2024 - Check Apple Silicon + Intel Homebrew cask locations
 * 0.0.6 - 13 Aug 2024 - Download experimental branch when cloning
 * 0.0.5 - 13 Aug 2024 - Install xcode tools as prereq if not already available
 * 0.0.4 - 13 Aug 2024 - Fix issues with conda not installing / installing if conda pre-exists
