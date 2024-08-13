@@ -4,6 +4,7 @@
 ENV_NAME="deep-live-cam"
 REQUIRED_PYTHON_VERSION="3.10"
 REPO_URL="https://github.com/hacksider/Deep-Live-Cam.git"
+BRANCH_NAME="experimental"
 MODELS_DIR="Deep-Live-Cam/models"
 URL_GFPGAN="https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.pth"
 URL_INSWAPPER="https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx"
@@ -21,13 +22,14 @@ display_help() {
     echo "Usage: ./deep_live_cam.sh [OPTIONS] [PYTHON OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --run        Skip setup and run the application only."
-    echo "  --setup      Perform setup only, without running the application."
-    echo "  --nocam      Skip camera access check and proceed with setup and running."
-    echo "  --cpu        Run the application using CPU only."
-    echo "  --clean      Remove the Conda environment and delete the cloned repository."
+    echo "  --run           Skip setup and run the application only."
+    echo "  --setup         Perform setup only, without running the application."
+    echo "  --nocam         Skip camera access check and proceed with setup and running."
+    echo "  --cpu           Run the application using CPU only."
+    echo "  --clean         Remove the Conda environment and delete the cloned repository."
+    echo "  --experimental  Download experimental branch of the project to use."
     echo "  --camreset [APP_ID]  Reset camera access for the specified application (e.g., com.apple.Terminal or com.googlecode.iterm2)."
-    echo "  --help       Display this help message and exit."
+    echo "  --help          Display this help message and exit."
     echo ""
     echo "Python Options:"
     echo "  Any additional options will be passed directly to the deep-live-cam Python application."
@@ -168,7 +170,11 @@ get_conda_bin_paths() {
 clone_repo() {
     if [[ ! -d "Deep-Live-Cam" ]]; then
         echo "Cloning the Deep-Live-Cam repository..."
-        git clone "$REPO_URL"
+        if [[ "$CLONE_EXPERIMENTAL" == true ]]; then
+            git clone -b "$BRANCH_NAME" --single-branch "$REPO_URL"
+        else
+            git clone "$REPO_URL"
+        fi
         if [[ $? -ne 0 ]]; then
             echo "Failed to clone the Deep-Live-Cam repository."
             exit 1
@@ -437,6 +443,7 @@ APP_ID=""
 CLEAN_ONLY=false
 SKIP_SETUP=false
 SKIP_RUN=false
+CLONE_EXPERIMENTAL=false
 
 # Check if Conda is installed
 check_conda
@@ -447,6 +454,10 @@ for arg in "$@"; do
         --run)
             echo "--run parameter detected. Skipping setup and running the application..."
             SKIP_SETUP=true
+            ;;
+        --experimental)
+            echo "--experimental parameter detected. Cloning experimental branch..."
+            CLONE_EXPERIMENTAL=true
             ;;
         --setup)
             echo "--setup parameter detected. Performing setup only..."

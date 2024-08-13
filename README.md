@@ -2,6 +2,8 @@
 
 This repository provides an installation script for setting up the [Deep-Live-Cam](https://github.com/hacksider/Deep-Live-Cam) project on macOS, specifically tailored for systems with Apple Silicon and Intel-based Macs. The script handles everything from setting up the Conda environment, installing necessary dependencies, and running the application with GPU acceleration if available.
 
+* [Version History](./VERSION_HISTORY.md)
+
 ## Repository Links
 
 - **Original Deep-Live-Cam Repository**: [hacksider/Deep-Live-Cam](https://github.com/hacksider/Deep-Live-Cam)
@@ -37,6 +39,12 @@ It also aims to avoid pitfalls of other types of environment approaches by pinpo
    ./deep_live_cam.sh
    ```
 
+   Or run the script and download / clone the experimental version (you will need to run --clean first if you have downloaded the stable version already):
+
+   ```
+   ./deep_live_cam.sh --experimental
+   ```
+
    This script will:
    - Install xcode tools if not already installed (press ENTER after installation to continue with script installation)
    - Install homebrew if not already installed
@@ -55,6 +63,7 @@ It also aims to avoid pitfalls of other types of environment approaches by pinpo
 ## Command-Line Options
 
 - **`--run`**: Skip setup and run the application only.
+- **`--experimental`**: When setting up and cloning, use the experimental branch - unstable but likely to have the latest fixes
 - **`--setup`**: Perform setup only, without running the application.
 - **`--nocam`**: Skip the camera access check and proceed with setup and running.
 - **`--cpu`**: Run the application using CPU only (no GPUs).
