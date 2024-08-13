@@ -51,6 +51,17 @@ display_help() {
     exit 0
 }
 
+check_and_install_xcode_tools() {
+    if ! xcode-select -p &>/dev/null; then
+        echo "Xcode Command Line Tools not found. Installing..."
+        echo "Please follow the prompts to complete installation."
+        xcode-select --install
+        read -p "Press [Enter] after Xcode Command Line Tools installation is complete..."
+    else
+        echo "Xcode Command Line Tools are already installed."
+    fi
+}
+
 # Function to check if Homebrew is installed, and install it if not
 check_and_install_homebrew() {
     if ! command -v brew &> /dev/null; then
@@ -221,6 +232,10 @@ install_coreml_dependencies_intel() {
 
 # Function to run the setup stage
 run_setup() {
+
+    # Check and install Xcode Command Line Tools if necessary
+    check_and_install_xcode_tools
+    
     # Check and install Homebrew if necessary
     check_and_install_homebrew
 

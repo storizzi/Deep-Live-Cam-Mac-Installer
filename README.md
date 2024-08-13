@@ -38,8 +38,11 @@ It also aims to avoid pitfalls of other types of environment approaches by pinpo
    ```
 
    This script will:
-   - Check for and install Conda if necessary.
-   - Set up a Conda environment with Python 3.10.
+   - Install xcode tools if not already installed (press ENTER after installation to continue with script installation)
+   - Install homebrew if not already installed
+   - Check for and install Conda if not already available
+   - Set up a Conda environment with Python 3.10
+   - Activate the environment
    - Clone the Deep-Live-Cam repository.
    - Download required models.
    - Install necessary dependencies, including appropriate CoreML support for either Intel or Apple Silicon
@@ -67,6 +70,8 @@ The application requires camera access. If the script detects that camera access
 
 ### Manually Enabling Camera Access
 
+If you are struggling to enable Camera access, try the following manual approach:
+
 1. Open `System Settings` (or `System Preferences` on older macOS versions).
 2. Go to `Privacy & Security` > `Camera`.
 3. Find your terminal application (e.g., Terminal, iTerm).
@@ -83,7 +88,21 @@ If you wish to remove the Conda environment and delete the cloned repository, yo
 ./deep_live_cam.sh --clean
 ```
 
-This will remove the environment and delete the `Deep-Live-Cam` directory, allowing you to start fresh.
+This will remove the environment and delete the `Deep-Live-Cam` directory, allowing you to start afresh.
+
+This is also useful if you want to update the repository - clean up what was there before, and there is less likely to be merge conflicts if you attempt a 'git pull'
+
+## Updating the script
+
+If you want to get the latest version of the script move to the directory location you cloned originally, and run the following commands:
+
+```
+./deep_live_cam.sh --clean
+git pull
+./deep_live_cam.sh
+```
+
+This will clean up the previous deep-cam-live (careful if you made any changes to the repository - they will be removed). Then the code will be updated with the new version. Then the script will be re-run.
 
 ## Uninstalling Miniconda and Homebrew
 
