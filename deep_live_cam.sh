@@ -51,17 +51,6 @@ display_help() {
     exit 0
 }
 
-# Function to ensure we are using Homebrew's Conda
-ensure_brew_conda() {
-    if [ -d "$BREW_CONDA_PATH" ]; then
-        export PATH="$BREW_CONDA_PATH:$PATH"
-        echo "Using Conda from Homebrew installation at $BREW_CONDA_PATH"
-    else
-        echo "Homebrew Conda not found at $BREW_CONDA_PATH. Please ensure Miniconda is installed via Homebrew."
-        exit 1
-    fi
-}
-
 # Function to check if Homebrew is installed, and install it if not
 check_and_install_homebrew() {
     if ! command -v brew &> /dev/null; then
@@ -80,11 +69,22 @@ check_and_install_homebrew() {
     fi
 }
 
-# Function to check if Conda is installed, and install Miniconda via Homebrew if not
-check_and_install_conda() {
-    ensure_brew_conda
+# Function to check if Conda is installed
+check_conda() {
+    if [ -d "$BREW_CONDA_PATH" ]; then
+        CONDA_BIN_PATH="$BREW_CONDA_PATH"
+        echo "Using Conda from Homebrew installation at $CONDA_BIN_PATH"
+    elif command -v conda &> /dev/null; then
+        CONDA_BIN_PATH=$(dirname "$(command -v conda)")
+        echo "Using existing Conda installation at $CONDA_BIN_PATH"
+    else
+        CONDA_BIN_PATH=""
+    fi
+}
 
-    if ! command -v conda &> /dev/null; then
+# Function to install Conda if not installed
+install_conda() {
+    if [ -z "$CONDA_BIN_PATH" ]; then
         echo "Conda is not installed. Installing Miniconda via Homebrew..."
         brew install --cask miniconda
         if [[ $? -ne 0 ]]; then
@@ -92,20 +92,15 @@ check_and_install_conda() {
             exit 1
         fi
         echo "Miniconda installed successfully."
-        # Initialize conda for the current shell
-        conda init zsh
+        conda init --all
         source ~/.zshrc
-    else
-        echo "Conda is already installed."
-        # Ensure Conda is initialized
-        conda init zsh
-        source ~/.zshrc
+        CONDA_BIN_PATH="$BREW_CONDA_PATH"
     fi
 }
 
 # Function to check the Python version in the environment
 check_python_version_in_env() {
-    local python_version=$(conda run -n $ENV_NAME python --version 2>&1 | awk '{print $2}')
+    local python_version=$("$CONDA_BIN_PATH/conda" run -n $ENV_NAME python --version 2>&1 | awk '{print $2}')
     
     if [[ $python_version == $REQUIRED_PYTHON_VERSION* ]]; then
         echo "Conda environment '$ENV_NAME' already has the correct Python version ($REQUIRED_PYTHON_VERSION)."
@@ -118,34 +113,34 @@ check_python_version_in_env() {
 
 # Function to create or recreate the Conda environment with the correct Python version
 create_or_update_conda_env() {
-    if conda info --envs | grep -q "$ENV_NAME"; then
+    if "$CONDA_BIN_PATH/conda" info --envs | awk '{print $1}' | grep -q "^$ENV_NAME$"; then
         if check_python_version_in_env; then
-            conda activate $ENV_NAME
+            "$CONDA_BIN_PATH/conda" activate $ENV_NAME
         else
             echo "Removing Conda environment '$ENV_NAME' due to incorrect Python version..."
-            conda remove -n $ENV_NAME --all -y
+            "$CONDA_BIN_PATH/conda" remove -n $ENV_NAME --all -y
             echo "Creating Conda environment '$ENV_NAME' with Python $REQUIRED_PYTHON_VERSION..."
-            conda create -n $ENV_NAME python=$REQUIRED_PYTHON_VERSION -y
+            "$CONDA_BIN_PATH/conda" create -n $ENV_NAME python=$REQUIRED_PYTHON_VERSION -y
             if [[ $? -ne 0 ]]; then
                 echo "Failed to create Conda environment with Python $REQUIRED_PYTHON_VERSION."
                 exit 1
             fi
-            conda activate $ENV_NAME
+            "$CONDA_BIN_PATH/conda" activate $ENV_NAME
         fi
     else
         echo "Creating Conda environment '$ENV_NAME' with Python $REQUIRED_PYTHON_VERSION..."
-        conda create -n $ENV_NAME python=$REQUIRED_PYTHON_VERSION -y
+        "$CONDA_BIN_PATH/conda" create -n $ENV_NAME python=$REQUIRED_PYTHON_VERSION -y
         if [[ $? -ne 0 ]]; then
             echo "Failed to create Conda environment with Python $REQUIRED_PYTHON_VERSION."
             exit 1
         fi
-        conda activate $ENV_NAME
+        "$CONDA_BIN_PATH/conda" activate $ENV_NAME
     fi
 }
 
 # Function to get the full path to Python and Pip in the Conda environment
 get_conda_bin_paths() {
-    CONDA_ENV_PATH=$(conda info --envs | grep "$ENV_NAME" | awk '{print $NF}')
+    CONDA_ENV_PATH=$("$CONDA_BIN_PATH/conda" info --envs | awk '/'$ENV_NAME'/ {print $NF}')
     PYTHON_PATH="$CONDA_ENV_PATH/bin/python"
     PIP_PATH="$CONDA_ENV_PATH/bin/pip"
 
@@ -229,8 +224,8 @@ run_setup() {
     # Check and install Homebrew if necessary
     check_and_install_homebrew
 
-    # Check and install Conda if necessary
-    check_and_install_conda
+    # Install Conda if not installed
+    install_conda
 
     # Create or update the Conda environment with the correct Python version
     create_or_update_conda_env
@@ -392,19 +387,19 @@ clean_environment() {
     echo "Cleaning up environment and repository..."
     
     # Ensure Conda is initialized in the current shell
-    conda init zsh
-    source ~/.zshrc
-    
+    check_conda
+    install_conda
+
     # Deactivate the environment if it is active
     if [[ "$CONDA_DEFAULT_ENV" == "$ENV_NAME" ]]; then
         echo "Deactivating the Conda environment '$ENV_NAME'..."
-        conda deactivate || echo "Warning: Could not deactivate the environment. Continuing with cleanup."
+        "$CONDA_BIN_PATH/conda" deactivate || echo "Warning: Could not deactivate the environment. Continuing with cleanup."
     fi
 
     # Remove Conda environment if it exists
-    if conda info --envs | grep -q "$ENV_NAME"; then
+    if "$CONDA_BIN_PATH/conda" info --envs | awk '{print $1}' | grep -q "^$ENV_NAME$"; then
         echo "Removing Conda environment '$ENV_NAME'..."
-        conda remove -n $ENV_NAME --all -y || echo "Warning: Could not remove the environment. Please ensure it is deactivated and try again."
+        "$CONDA_BIN_PATH/conda" remove -n $ENV_NAME --all -y || echo "Warning: Could not remove the environment. Please ensure it is deactivated and try again."
     else
         echo "Conda environment '$ENV_NAME' does not exist."
     fi
@@ -427,6 +422,9 @@ APP_ID=""
 CLEAN_ONLY=false
 SKIP_SETUP=false
 SKIP_RUN=false
+
+# Check if Conda is installed
+check_conda
 
 # Parse command-line arguments
 for arg in "$@"; do
@@ -499,5 +497,5 @@ fi
 
 # Deactivate the environment only if it was activated in this session
 if [[ "$CONDA_DEFAULT_ENV" == "$ENV_NAME" ]]; then
-    conda deactivate
+    "$CONDA_BIN_PATH/conda" deactivate
 fi
