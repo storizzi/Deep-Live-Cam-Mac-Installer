@@ -121,9 +121,9 @@ If you decide to remove Miniconda and Homebrew from your system, follow the step
 
 Since Miniconda was installed using Homebrew, you can easily uninstall it using the following command:
 
-'''
+```
 brew uninstall --cask miniconda
-'''
+```
 
 This command will remove the Miniconda installation from your system.
 
@@ -131,9 +131,9 @@ This command will remove the Miniconda installation from your system.
 
 1. **Delete Conda Environments and Configuration Files**:
 
-   '''
+   ```
    rm -rf ~/miniconda3 ~/.conda ~/.condarc ~/.continuum ~/.anaconda
-   '''
+   ```
 
    These commands will remove:
    - The default Miniconda installation directory (`~/miniconda3`).
@@ -146,7 +146,7 @@ This command will remove the Miniconda installation from your system.
 
    If you had initialized Conda in your shell, you might also want to remove the Conda initialization commands from your shell configuration files, such as `~/.zshrc` or `~/.bashrc`. Open the file and remove any lines referencing Conda, such as:
 
-   '''
+   ```
    # >>> conda initialize >>>
    __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
    if [ $? -eq 0 ]; then
@@ -160,7 +160,7 @@ This command will remove the Miniconda installation from your system.
    fi
    unset __conda_setup
    # <<< conda initialize <<<
-   '''
+   ```
 
    After making these changes, you can reload your shell configuration or restart your terminal session.
 
@@ -172,9 +172,9 @@ To completely remove Homebrew from your system, use the following steps:
 
    Homebrew provides an official uninstall script that you can use to remove it from your system:
 
-   '''
+   ```
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
-   '''
+   ```
 
    This script will remove all Homebrew packages, directories, and settings from your system.
 
@@ -182,12 +182,12 @@ To completely remove Homebrew from your system, use the following steps:
 
    After running the uninstall script, some residual files may remain. You can remove them manually by deleting the Homebrew directory:
 
-   '''
+   ```
    sudo rm -rf /usr/local/Homebrew
    sudo rm -rf /opt/homebrew
    rm -rf ~/.brew
    rm -rf /usr/local/Caskroom /usr/local/Cellar /usr/local/Frameworks
-   '''
+   ```
 
    These commands remove the main Homebrew directories, any cached files, and any additional installations.
 
@@ -216,7 +216,6 @@ The code will be stored at this location: https://github.com/storizzi/Deep-Live-
 
 Can you include a few sections on how to uninstall miniconda and homebrew if you want to (bearing in mind we installed miniconda with homebrew)
 
-Can you use ``` instead of 
-backticks so that I can copy paste the markdown.
+Can you use ''' instead of backticks so that I can copy paste the markdown.
 
 Can you put the markdown text into a code block so I. can see the markdown to copy include links etc
