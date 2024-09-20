@@ -1,44 +1,40 @@
 import AVFoundation
 import Cocoa
 
-func requestCameraAccess() -> Bool {
-    let semaphore = DispatchSemaphore(value: 0)
-    var accessGranted = false
-    
+func requestCameraAccess(completion: @escaping (Bool) -> Void) {
     AVCaptureDevice.requestAccess(for: .video) { granted in
-        accessGranted = granted
         if granted {
             print("Camera access granted.")
         } else {
             print("Camera access denied.")
         }
-        semaphore.signal()
+        completion(granted)
     }
-    
-    _ = semaphore.wait(timeout: .distantFuture)
-    return accessGranted
 }
 
-func checkCameraAuthorizationStatus() -> Bool {
+func checkCameraAuthorizationStatus(completion: @escaping (Bool) -> Void) {
     let status = AVCaptureDevice.authorizationStatus(for: .video)
     switch status {
     case .authorized:
         print("Camera access is authorized.")
-        return true
+        completion(true)
     case .notDetermined:
         print("Camera access is not determined. Requesting access...")
-        return requestCameraAccess()
+        requestCameraAccess { granted in
+            completion(granted)
+        }
     case .denied:
         print("Camera access is denied. Please enable it in System Settings.")
-        return false
+        completion(false)
     case .restricted:
         print("Camera access is restricted.")
-        return false
+        completion(false)
     @unknown default:
         print("Unknown camera access status.")
-        return false
+        completion(false)
     }
 }
+
 
 // Attempt to access the camera to trigger a permission prompt
 if checkCameraAuthorizationStatus() {
